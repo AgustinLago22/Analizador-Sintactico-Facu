@@ -35,7 +35,7 @@ class Parser {
     const token = this.currentToken();
     if (!token || token.tipo !== expectedType) {
       throw new Error(
-        `Error de sintaxis: se esperaba ${expectedType}, pero se encontró ${token?.tipo}`
+        `Error de sintaxis: se esperaba ${expectedType}, pero se encontró ${token?.tipo} (${token?.valor})`
       );
     }
     this.position++;
@@ -52,23 +52,25 @@ class Parser {
   }
 
   parseProgram(): ASTNode[] {
-    return this.parseDeclarations();
+    return this.parseStatements();
   }
 
-  parseDeclarations(): ASTNode[] {
-    const declarations: ASTNode[] = [];
+  parseStatements(): ASTNode[] {
+    const statements: ASTNode[] = [];
     while (this.currentToken()?.tipo !== "EOF") {
-      declarations.push(this.parseDeclaration());
+      statements.push(this.parseStatement());
     }
-    return declarations;
+    return statements;
   }
 
-  parseDeclaration(): ASTNode {
+  parseStatement(): ASTNode {
     const token = this.currentToken();
     if (!token) throw new Error("No hay más tokens para procesar");
 
+    console.log("Parsing statement starting with:", token);
+
     switch (token.valor) {
-      case "ñe'e":
+      case "nee":
         return this.parseImpresion();
       case "ramo":
         return this.parseCondicional();
@@ -87,11 +89,11 @@ class Parser {
         }
     }
 
-    throw new Error(`Declaración no válida comenzando con: ${token.valor}`);
+    throw new Error(`Sentencia no válida comenzando con: ${token.valor}`);
   }
 
   parseImpresion(): ImpresionNode {
-    this.consume("PALABRA_CLAVE"); // ñe'e
+    this.consume("PALABRA_CLAVE"); // nee
     const expr = this.parseExpresion();
     return {
       tipo: "Impresion",
@@ -100,13 +102,13 @@ class Parser {
   }
 
   parseDeclaracionVariable(): DeclaracionVariableNode {
-    const tipoToken = this.consume("PALABRA_CLAVE");
-    const nombreToken = this.consume("IDENTIFICADOR");
+    const tipoToken = this.consume("PALABRA_CLAVE"); // Consume el tipo (entero, decimal, etc.)
+    const nombreToken = this.consume("IDENTIFICADOR"); // Consume el nombre de la variable
     let valor: ExpresionNode | undefined = undefined;
 
-    if (this.match("ha'e")) {
-      this.advance(); // consumir ha'e
-      valor = this.parseExpresion();
+    if (this.match("hae")) {
+      this.advance(); // consumir hae
+      valor = this.parseExpresion(); // Parsear la expresión de inicialización
     }
 
     return {
@@ -118,14 +120,14 @@ class Parser {
   }
 
   parseAsignacion(): AsignacionNode {
-    const identificador = this.consume("IDENTIFICADOR");
-    this.consume("PALABRA_CLAVE"); // ha'e
-    const expresion = this.parseExpresion();
+    const identificador = this.consume("IDENTIFICADOR"); // Consume el identificador
+    this.consume("PALABRA_CLAVE"); // Consume 'hae'
+    const expresion = this.parseExpresion(); // Consume la expresión a asignar
 
     return {
       tipo: "Asignacion",
       identificador: identificador.valor,
-      expresion,
+      expresion: expresion,
     };
   }
 
@@ -173,6 +175,12 @@ class Parser {
 
     const parametros: string[] = [];
     while (!this.match(")")) {
+      if (this.currentToken()?.tipo !== "IDENTIFICADOR") {
+        if (this.match(")")) break;
+        throw new Error(
+          "Se esperaba un IDENTIFICADOR en la lista de parámetros."
+        );
+      }
       parametros.push(this.consume("IDENTIFICADOR").valor);
       if (this.match(",")) {
         this.advance();
@@ -202,14 +210,14 @@ class Parser {
 
   parseBloque(): ASTNode[] {
     this.consume("LLAVE_IZQ");
-    const declaraciones: ASTNode[] = [];
+    const statements: ASTNode[] = [];
 
-    while (!this.match("}")) {
-      declaraciones.push(this.parseDeclaration());
+    while (!this.match("}") && this.currentToken()?.tipo !== "EOF") {
+      statements.push(this.parseStatement());
     }
 
     this.consume("LLAVE_DER");
-    return declaraciones;
+    return statements;
   }
 
   parseExpresion(): ExpresionNode {
@@ -223,6 +231,9 @@ class Parser {
       this.match("==") ||
       this.match("<") ||
       this.match("<=") ||
+      this.match(">") ||
+      this.match(">=") ||
+      this.match("!=") ||
       this.match("&&") ||
       this.match("||")
     ) {
@@ -265,6 +276,11 @@ class Parser {
         const argumentos: ExpresionNode[] = [];
 
         while (!this.match(")")) {
+          if (this.currentToken()?.tipo === "EOF") {
+            throw new Error(
+              "Se esperaba una expresión en la lista de argumentos, pero se encontró EOF."
+            );
+          }
           argumentos.push(this.parseExpresion());
           if (this.match(",")) {
             this.advance();

@@ -36,42 +36,71 @@ const palabrasClave = new Set([
   "false",
 ]);
 
-const operadores = new Set(["+", "-", "*", "/", "==", "<", "<=", "&&", "||"]);
+const operadores = new Set([
+  "+",
+  "-",
+  "*",
+  "/",
+  "==",
+  "<",
+  "<=",
+  ">",
+  ">=",
+  "!=",
+  "&&",
+  "||",
+]);
 
 export function lexer(codigo: string): Token[] {
   const tokens: Token[] = [];
-  const palabras = codigo.match(/\w+|\S/g) || [];
+  // Nuevo regex para separar tokens: identificadores, números, strings, operadores y símbolos
+  const regex =
+    /([a-zA-Z_][a-zA-Z0-9_]*)|(\d+\.\d+)|(\d+)|("(?:[^"\\]|\\.)*")|([+\-*\/==<>]|<=|>=|!=|&&|\|\|)|([{}()\,:])|(\s+)/g;
+  let match;
   let posicion = 0;
 
-  for (const palabra of palabras) {
-    if (palabrasClave.has(palabra)) {
-      tokens.push({ tipo: "PALABRA_CLAVE", valor: palabra, posicion });
-    } else if (/^\d+$/.test(palabra)) {
-      tokens.push({ tipo: "ENTERO", valor: palabra, posicion });
-    } else if (/^\d+\.\d+$/.test(palabra)) {
-      tokens.push({ tipo: "DECIMAL", valor: palabra, posicion });
-    } else if (/^"(.*?)"$/.test(palabra)) {
-      tokens.push({ tipo: "STRING", valor: palabra, posicion });
-    } else if (palabra === "(") {
-      tokens.push({ tipo: "PAREN_IZQ", valor: palabra, posicion });
-    } else if (palabra === ")") {
-      tokens.push({ tipo: "PAREN_DER", valor: palabra, posicion });
-    } else if (palabra === "{") {
-      tokens.push({ tipo: "LLAVE_IZQ", valor: palabra, posicion });
-    } else if (palabra === "}") {
-      tokens.push({ tipo: "LLAVE_DER", valor: palabra, posicion });
-    } else if (palabra === ",") {
-      tokens.push({ tipo: "COMA", valor: palabra, posicion });
-    } else if (palabra === ":") {
-      tokens.push({ tipo: "DOSPUNTOS", valor: palabra, posicion });
-    } else if (operadores.has(palabra)) {
-      tokens.push({ tipo: "OPERADOR", valor: palabra, posicion });
-    } else if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(palabra)) {
-      tokens.push({ tipo: "IDENTIFICADOR", valor: palabra, posicion });
-    } else {
-      throw new Error(`Token no reconocido: ${palabra}`);
+  while ((match = regex.exec(codigo)) !== null) {
+    const tokenValor = match[0];
+    // Ignorar espacios en blanco
+    if (tokenValor.match(/^\s+$/)) {
+      posicion += tokenValor.length;
+      continue;
     }
-    posicion++;
+
+    if (palabrasClave.has(tokenValor)) {
+      tokens.push({ tipo: "PALABRA_CLAVE", valor: tokenValor, posicion });
+    } else if (operadores.has(tokenValor)) {
+      tokens.push({ tipo: "OPERADOR", valor: tokenValor, posicion });
+    } else if (match[2]) {
+      // Grupo para decimales
+      tokens.push({ tipo: "DECIMAL", valor: tokenValor, posicion });
+    } else if (match[3]) {
+      // Grupo para enteros
+      tokens.push({ tipo: "ENTERO", valor: tokenValor, posicion });
+    } else if (match[4]) {
+      // Grupo para strings
+      // Eliminar las comillas
+      const valorString = tokenValor.substring(1, tokenValor.length - 1);
+      tokens.push({ tipo: "STRING", valor: valorString, posicion });
+    } else if (match[1]) {
+      // Grupo para identificadores
+      tokens.push({ tipo: "IDENTIFICADOR", valor: tokenValor, posicion });
+    } else if (tokenValor === "(") {
+      tokens.push({ tipo: "PAREN_IZQ", valor: tokenValor, posicion });
+    } else if (tokenValor === ")") {
+      tokens.push({ tipo: "PAREN_DER", valor: tokenValor, posicion });
+    } else if (tokenValor === "{") {
+      tokens.push({ tipo: "LLAVE_IZQ", valor: tokenValor, posicion });
+    } else if (tokenValor === "}") {
+      tokens.push({ tipo: "LLAVE_DER", valor: tokenValor, posicion });
+    } else if (tokenValor === ",") {
+      tokens.push({ tipo: "COMA", valor: tokenValor, posicion });
+    } else if (tokenValor === ":") {
+      tokens.push({ tipo: "DOSPUNTOS", valor: tokenValor, posicion });
+    } else {
+      throw new Error(`Token no reconocido: ${tokenValor}`);
+    }
+    posicion += tokenValor.length;
   }
 
   tokens.push({ tipo: "EOF", valor: "", posicion });
