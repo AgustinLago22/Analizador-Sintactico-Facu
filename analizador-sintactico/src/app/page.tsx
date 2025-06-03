@@ -1,103 +1,138 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { lexer } from "./analizador/lexter";
+import Parser from "./analizador/parser";
+import { ASTNode } from "./types/ast";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [codigo, setCodigo] = useState("");
+  const [resultado, setResultado] = useState<ASTNode[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const analizarCodigo = () => {
+    try {
+      setError(null);
+      const tokens = lexer(codigo);
+      const parser = new Parser(tokens);
+      const ast = parser.parseProgram();
+      setResultado(ast);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+      setResultado(null);
+    }
+  };
+
+  return (
+    <main className="min-h-screen p-8 bg-gray-100">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">
+          Analizador Sintáctico en Guaraní
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Editor de código */}
+          <div className="bg-white rounded-lg shadow-lg p-4">
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">
+              Código en Guaraní
+            </h2>
+            <textarea
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value)}
+              className="w-full h-64 p-4 border rounded-lg font-mono text-sm bg-gray-50 text-black"
+              placeholder={`Ejemplo:
+entero x ha&apos;e 5
+decimal y ha&apos;e 3.14
+ñe&apos;e x + y
+
+ramo (x > 3) {
+    ñe&apos;e "x es mayor que 3"
+} ambue {
+    ñe&apos;e "x es menor o igual a 3"
+}`}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <button
+              onClick={analizarCodigo}
+              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Analizar
+            </button>
+          </div>
+
+          {/* Resultado del análisis */}
+          <div className="bg-white rounded-lg shadow-lg p-4">
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">
+              Resultado del Análisis
+            </h2>
+            <div className="h-64 overflow-auto p-4 border rounded-lg bg-gray-50">
+              {error ? (
+                <div className="text-red-600 font-mono text-sm">{error}</div>
+              ) : resultado ? (
+                <pre className="font-mono text-sm">
+                  {JSON.stringify(resultado, null, 2)}
+                </pre>
+              ) : (
+                <div className="text-gray-500 italic">
+                  El resultado del análisis aparecerá aquí...
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        {/* Guía de uso */}
+        <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700">
+            Guía de Uso
+          </h2>
+          <div className="space-y-4 text-gray-600">
+            <div>
+              <h3 className="font-semibold">Declaración de Variables:</h3>
+              <code className="block bg-gray-50 p-2 rounded mt-1">
+                entero x ha&apos;e 5
+                <br />
+                decimal y ha&apos;e 3.14
+                <br />
+                string mensaje ha&apos;e &quot;Hola&quot;
+              </code>
+            </div>
+            <div>
+              <h3 className="font-semibold">Impresión:</h3>
+              <code className="block bg-gray-50 p-2 rounded mt-1">
+                ñe&apos;e x
+                <br />
+                ñe&apos;e &quot;Hola mundo&quot;
+              </code>
+            </div>
+            <div>
+              <h3 className="font-semibold">Condicionales:</h3>
+              <code className="block bg-gray-50 p-2 rounded mt-1">
+                ramo (x &gt; 5) {"{"}
+                <br />
+                &nbsp;&nbsp;ñe&apos;e &quot;x es mayor que 5&quot;
+                <br />
+                {"}"} ambue {"{"}
+                <br />
+                &nbsp;&nbsp;ñe&apos;e &quot;x es menor o igual a 5&quot;
+                <br />
+                {"}"}
+              </code>
+            </div>
+            <div>
+              <h3 className="font-semibold">Bucles:</h3>
+              <code className="block bg-gray-50 p-2 rounded mt-1">
+                guara (i &lt; 10) {"{"}
+                <br />
+                &nbsp;&nbsp;ñe&apos;e i
+                <br />
+                &nbsp;&nbsp;i ha&apos;e i + 1
+                <br />
+                {"}"}
+              </code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
