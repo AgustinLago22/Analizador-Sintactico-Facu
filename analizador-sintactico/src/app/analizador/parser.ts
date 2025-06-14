@@ -255,17 +255,28 @@ class Parser {
     if (!token) throw new Error("Expresión inesperadamente vacía");
 
     if (
-      token.tipo === "ENTERO" ||
-      token.tipo === "DECIMAL" ||
-      token.tipo === "STRING" ||
-      token.tipo === "BOOLEANO"
-    ) {
-      this.advance();
-      return {
-        tipo: "Literal",
-        valor: token.valor,
-      };
-    }
+  token.tipo === "ENTERO" ||
+  token.tipo === "DECIMAL" ||
+  token.tipo === "STRING" ||
+  token.tipo === "BOOLEANO"
+) {
+  this.advance();
+  let valor: any;
+  if (token.tipo === "ENTERO") {
+    valor = Number(token.valor); // convertir a número entero
+  } else if (token.tipo === "DECIMAL") {
+    valor = Number(token.valor); // convertir a número decimal
+  } else if (token.tipo === "BOOLEANO") {
+    valor = token.valor === "true"; // convertir a booleano
+  } else {
+    valor = token.valor; // string queda tal cual
+  }
+  return {
+    tipo: "Literal",
+    valor,
+  };
+}
+
 
     if (token.tipo === "IDENTIFICADOR") {
       const nombre = token.valor;

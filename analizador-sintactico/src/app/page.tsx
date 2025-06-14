@@ -7,18 +7,21 @@ import { ASTNode } from "./types/ast";
 import { Token } from "./types/Token.type";
 import Image from "next/image";
 import logo from "../../public/logo.png";
+import { Interpreter } from "./analizador/interprete"; // Importar el intérprete
 
 export default function Home() {
   const [codigo, setCodigo] = useState("");
   const [tokensResult, setTokensResult] = useState<Token[] | null>(null);
   const [astResult, setAstResult] = useState<ASTNode[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [output, setOutput] = useState<string>("");
 
   const analizarCodigo = () => {
     try {
       setError(null);
       setTokensResult(null);
       setAstResult(null);
+      setOutput("");
 
       const tokens = lexer(codigo);
       setTokensResult(tokens);
@@ -26,10 +29,16 @@ export default function Home() {
       const parser = new Parser(tokens);
       const ast = parser.parseProgram();
       setAstResult(ast);
+
+      const interpreter = new Interpreter();
+      interpreter.run(ast);
+
+      setOutput(interpreter.output.join("\n"));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
       setTokensResult(null);
       setAstResult(null);
+      setOutput("");
     }
   };
 
@@ -65,21 +74,21 @@ export default function Home() {
               onChange={(e) => setCodigo(e.target.value)}
               className="w-full min-h-[200px] flex-grow p-4 border rounded-lg font-mono text-sm bg-white dark:bg-gray-700 text-black dark:text-gray-100"
               placeholder={`Ejemplo:
-        entero x hae 5
-        decimal y hae 3.14
-        nee x + y
+entero x hae 5
+decimal y hae 3.14
+nee x + y
 
-        ramo (x > 3) {
-            nee "x es mayor que 3"
-        } ambue {
-            nee "x es menor o igual a 3"
-        }`}
+ramo (x > 3) {
+    nee "x es mayor que 3"
+} ambue {
+    nee "x es menor o igual a 3"
+}`}
             />
             <button
               onClick={analizarCodigo}
               className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors self-start"
             >
-              Analizar
+              Analizar y Ejecutar
             </button>
           </div>
 
@@ -142,7 +151,7 @@ export default function Home() {
         </div>
 
         {/* Fila 3: Guía de uso */}
-        <div className="bg-gray-500 dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="bg-gray-500 dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">
             Guía de Uso
           </h2>
@@ -193,7 +202,19 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Fila 4: Salida del intérprete */}
+        <div className="bg-gray-800 text-white p-4 rounded mb-6 font-mono min-h-[120px] whitespace-pre-wrap">
+          <h2 className="mb-2 text-xl font-semibold">Salida del intérprete</h2>
+          {output ? (
+            <pre>{output}</pre>
+          ) : (
+            <div className="italic text-gray-400">
+              Aquí aparecerá la salida...
+            </div>
+          )}
+        </div>
+      </div> {/* ✅ Cierre final del contenedor principal */}
     </main>
   );
 }
