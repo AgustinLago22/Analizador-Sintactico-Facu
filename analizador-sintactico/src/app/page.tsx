@@ -9,6 +9,8 @@ import Image from "next/image";
 import logo from "../../public/logo.png";
 import { Interpreter } from "./analizador/interprete"; // Importar el intérprete
 
+import ASTTree from "./Components/ASTTree";
+
 export default function Home() {
   const [codigo, setCodigo] = useState("");
   const [tokensResult, setTokensResult] = useState<Token[] | null>(null);
@@ -137,16 +139,33 @@ ramo (x > 3) {
           <h2 className="text-xl font-semibold mb-4 text-white dark:text-gray-100">
             Árbol Sintáctico Abstracto (AST)
           </h2>
-          <div className="h-64 overflow-auto p-4 border rounded-lg bg-gray-50 dark:bg-gray-700">
-            {astResult ? (
-              <pre className="font-mono text-sm text-black dark:text-gray-100">
-                {JSON.stringify(astResult, null, 2)}
-              </pre>
-            ) : (
-              <div className="text-gray-500 dark:text-gray-300 italic">
-                El AST aparecerá aquí después del análisis sintáctico...
-              </div>
-            )}
+
+          <div
+            className="relative max-h-[80vh] p-4 border rounded-lg bg-gray-50 dark:bg-gray-700 overflow-auto scrollbar-hide"
+            style={{
+              minWidth: "1000px",
+              scrollbarWidth: "none", // Firefox
+              msOverflowStyle: "none", // IE/Edge
+            }}
+          >
+            <style jsx>{`
+              /* Webkit (Chrome, Safari) */
+              .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+
+            <div className="flex justify-center min-w-[1000px]">
+              {astResult && astResult.length > 0 ? (
+                <ASTTree
+                  data={{ tipo: "Programa", declaraciones: astResult }}
+                />
+              ) : (
+                <div className="text-gray-500 dark:text-gray-300 italic">
+                  El AST aparecerá aquí después del análisis sintáctico...
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -214,7 +233,8 @@ ramo (x > 3) {
             </div>
           )}
         </div>
-      </div> {/* ✅ Cierre final del contenedor principal */}
+      </div>{" "}
+      {/* ✅ Cierre final del contenedor principal */}
     </main>
   );
 }

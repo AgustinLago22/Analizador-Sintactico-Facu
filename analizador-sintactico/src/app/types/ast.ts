@@ -83,7 +83,7 @@ export interface AsignacionNode {
 
 export interface ExpresionNode {
   tipo: "Literal" | "Identificador" | "Binaria" | "LlamadaFuncion";
-  valor?: unknown;
+  valor?: string | number | boolean | null;  // Cambiado desde unknown
   operador?: string;
   izquierdo?: ExpresionNode;
   derecho?: ExpresionNode;
