@@ -43,7 +43,8 @@ export class Interpreter {
       node.tipo === "Bucle" ||
       node.tipo === "DeclaracionVariable" ||
       node.tipo === "Funcion" ||
-      node.tipo === "Retorno"
+      node.tipo === "Retorno" ||
+      node.tipo === "LlamadaFuncion"
     ) {
       switch (node.tipo) {
         case "DeclaracionVariable":
@@ -60,6 +61,8 @@ export class Interpreter {
           return this.declareFunction(node as FuncionNode);
         case "Retorno":
           return { returnValue: this.evaluate((node as RetornoNode).valor) };
+        case "LlamadaFuncion":
+        return this.callFunction(node as LlamadaFuncionNode);
       }
     }
 

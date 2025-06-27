@@ -85,11 +85,24 @@ class Parser {
           return this.parseDeclaracionVariable();
         }
         if (token.tipo === "IDENTIFICADOR") {
-          return this.parseAsignacion();
+          const next = this.nextToken();
+
+          if (next && next.tipo === "PALABRA_CLAVE" && next.valor === "hae") {
+            return this.parseAsignacion();
+          } else if (next && next.tipo === "PAREN_IZQ") {
+            return this.parseLlamadaFuncionComoStatement();
+          }
         }
     }
 
     throw new Error(`Sentencia no válida comenzando con: ${token.valor}`);
+  }
+  parseLlamadaFuncionComoStatement(): ASTNode {
+    const expr = this.parseExpresion();
+    if (expr.tipo !== "LlamadaFuncion") {
+      throw new Error("Se esperaba una llamada a función");
+    }
+    return expr;
   }
 
   parseImpresion(): ImpresionNode {
@@ -255,28 +268,27 @@ class Parser {
     if (!token) throw new Error("Expresión inesperadamente vacía");
 
     if (
-  token.tipo === "ENTERO" ||
-  token.tipo === "DECIMAL" ||
-  token.tipo === "STRING" ||
-  token.tipo === "BOOLEANO"
-) {
-  this.advance();
-  let valor: any;
-  if (token.tipo === "ENTERO") {
-    valor = Number(token.valor); // convertir a número entero
-  } else if (token.tipo === "DECIMAL") {
-    valor = Number(token.valor); // convertir a número decimal
-  } else if (token.tipo === "BOOLEANO") {
-    valor = token.valor === "true"; // convertir a booleano
-  } else {
-    valor = token.valor; // string queda tal cual
-  }
-  return {
-    tipo: "Literal",
-    valor,
-  };
-}
-
+      token.tipo === "ENTERO" ||
+      token.tipo === "DECIMAL" ||
+      token.tipo === "STRING" ||
+      token.tipo === "BOOLEANO"
+    ) {
+      this.advance();
+      let valor: any;
+      if (token.tipo === "ENTERO") {
+        valor = Number(token.valor); // convertir a número entero
+      } else if (token.tipo === "DECIMAL") {
+        valor = Number(token.valor); // convertir a número decimal
+      } else if (token.tipo === "BOOLEANO") {
+        valor = token.valor === "true"; // convertir a booleano
+      } else {
+        valor = token.valor; // string queda tal cual
+      }
+      return {
+        tipo: "Literal",
+        valor,
+      };
+    }
 
     if (token.tipo === "IDENTIFICADOR") {
       const nombre = token.valor;
